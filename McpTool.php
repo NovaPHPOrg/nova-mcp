@@ -53,7 +53,16 @@ abstract class McpTool
 
         // 验证参数类型（简化版本）
         if (isset($this->inputSchema['properties'])) {
-            $this->validateTypes($arguments, $this->inputSchema['properties']);
+            $properties = $this->inputSchema['properties'];
+            // 如果是空对象（stdClass），跳过验证
+            if (is_object($properties) && get_class($properties) === 'stdClass' && empty((array)$properties)) {
+                return;
+            }
+            // 如果是对象，转换为数组
+            if (is_object($properties)) {
+                $properties = (array)$properties;
+            }
+            $this->validateTypes($arguments, $properties);
         }
     }
 
