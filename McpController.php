@@ -27,7 +27,7 @@ abstract class McpController extends Controller
     public function __construct()
     {
         parent::__construct();
-        $this->mcpRequest = new McpRequest();
+        $this->mcpRequest = new McpRequest($this->request);
         $this->mcpServer = $this->createMcpServer();
         $this->registerComponents();
     }

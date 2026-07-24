@@ -9,25 +9,21 @@ use nova\framework\json\Json;
 use nova\framework\json\JsonDecodeException;
 
 /**
- * MCP请求处理类
- * 
- * 简洁的JSON-RPC 2.0请求解析
- * 
- * @author Ankio
- * @version 1.0
+ * MCP 请求解析：组合当前 HTTP Request，不另起一套 Request。
  */
-class McpRequest extends Request
+class McpRequest
 {
     private ?array $jsonRpcData = null;
 
-    /**
-     * 获取JSON-RPC数据
-     */
+    public function __construct(private Request $request)
+    {
+    }
+
     public function getJsonRpcData(): ?array
     {
         if ($this->jsonRpcData === null) {
             try {
-                $this->jsonRpcData = Json::decode($this->raw(),true);
+                $this->jsonRpcData = Json::decode($this->request->raw(), true);
             } catch (JsonDecodeException $e) {
                 $this->jsonRpcData = null;
             }
@@ -60,7 +56,8 @@ class McpRequest extends Request
      */
     public function getParams(): array
     {
-        return $this->getJsonRpcData()['params'] ?? [];
+        $params = $this->getJsonRpcData()['params'] ?? [];
+        return is_array($params) ? $params : [];
     }
 
     /**
