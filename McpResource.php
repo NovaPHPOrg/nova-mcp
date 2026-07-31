@@ -6,9 +6,9 @@ namespace nova\plugin\mcp;
 
 /**
  * MCP资源抽象
- * 
+ *
  * 简洁的资源定义和读取
- * 
+ *
  * @author Ankio
  * @version 1.0
  */
@@ -19,7 +19,8 @@ abstract class McpResource
         protected string $name,
         protected ?string $description = null,
         protected ?string $mimeType = null
-    ) {}
+    ) {
+    }
 
     /**
      * 获取资源信息
@@ -54,4 +55,4 @@ abstract class McpResource
     {
         return $this->uri;
     }
-} 
+}

@@ -6,9 +6,9 @@ namespace nova\plugin\mcp;
 
 /**
  * MCP服务器注册器
- * 
+ *
  * 管理工具、资源、提示的注册和调用
- * 
+ *
  * @author Ankio
  * @version 1.0
  */
@@ -26,23 +26,28 @@ class McpServer
     /** @var array 服务器信息 */
     private array $serverInfo;
 
-    /** @var array 服务器能力 */
-    private array $capabilities;
+    /**
+     * initialize 时下发给客户端的使用说明。
+     * 用来推送「必读 Resource」之类客户端不会主动发现的约束。
+     */
+    private string $instructions = '';
 
     public function __construct(string $name, string $version, string $description = '')
     {
         $this->serverInfo = [
             'name' => $name,
             'version' => $version,
-            'description' => $description
         ];
+        if ($description !== '') {
+            $this->serverInfo['description'] = $description;
+        }
+    }
 
-        // 只声明实际支持的能力
-        $this->capabilities = [
-            'resources' => (object)[],
-            'tools' => (object)[],
-            'prompts' => (object)[]
-        ];
+    /** 设置 initialize.instructions（空串则不下发该字段） */
+    public function setInstructions(string $instructions): self
+    {
+        $this->instructions = trim($instructions);
+        return $this;
     }
 
     /**
@@ -51,7 +56,6 @@ class McpServer
     public function registerTool(McpTool $tool): self
     {
         $this->tools[$tool->getInfo()['name']] = $tool;
-        $this->capabilities['tools'] = (object)['listChanged' => true];
         return $this;
     }
 
@@ -61,7 +65,6 @@ class McpServer
     public function registerResource(McpResource $resource): self
     {
         $this->resources[$resource->getUri()] = $resource;
-        $this->capabilities['resources'] = (object)['subscribe' => true, 'listChanged' => true];
         return $this;
     }
 
@@ -71,7 +74,6 @@ class McpServer
     public function registerPrompt(McpPrompt $prompt): self
     {
         $this->prompts[$prompt->getName()] = $prompt;
-        $this->capabilities['prompts'] = (object)['listChanged' => true];
         return $this;
     }
 
@@ -80,27 +82,32 @@ class McpServer
      */
     public function getInitializeResponse(string $protocolVersion): array
     {
-        
-        // 动态构建capabilities，只包含实际注册的功能
+        // 只声明实际具备的能力：有 list/read 就给空对象；未实现的 subscribe 不吹。
         $capabilities = [];
-        
+
         if (!empty($this->tools)) {
-            $capabilities['tools'] = (object)['listChanged' => true];
-        }
-        
-        if (!empty($this->resources)) {
-            $capabilities['resources'] = (object)['subscribe' => true, 'listChanged' => true];
-        }
-        
-        if (!empty($this->prompts)) {
-            $capabilities['prompts'] = (object)['listChanged' => true];
+            $capabilities['tools'] = (object)[];
         }
 
-        return [
+        if (!empty($this->resources)) {
+            $capabilities['resources'] = (object)[];
+        }
+
+        if (!empty($this->prompts)) {
+            $capabilities['prompts'] = (object)[];
+        }
+
+        $result = [
             'protocolVersion' => $protocolVersion,
+            'capabilities' => (object)$capabilities,
             'serverInfo' => $this->serverInfo,
-            'capabilities' => (object)$capabilities
         ];
+
+        if ($this->instructions !== '') {
+            $result['instructions'] = $this->instructions;
+        }
+
+        return $result;
     }
 
     /**
@@ -129,7 +136,7 @@ class McpServer
         }
 
         $tool = $this->tools[$name];
-        
+
         // 让工具自己验证参数
         $tool->validateArguments($arguments);
 
@@ -215,4 +222,4 @@ class McpServer
     {
         return !empty($this->prompts);
     }
-} 
+}

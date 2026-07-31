@@ -4,15 +4,14 @@ declare(strict_types=1);
 
 namespace nova\plugin\mcp;
 
-use nova\framework\core\Logger;
-use nova\framework\route\Controller;
 use nova\framework\http\Response;
+use nova\framework\route\Controller;
 
 /**
  * MCP控制器基类
- * 
+ *
  * 使用注册器模式管理工具和资源，自动化处理请求
- * 
+ *
  * @author Ankio
  * @version 1.0
  */
@@ -128,4 +127,4 @@ abstract class McpController extends Controller
     {
         // 子类可以重写
     }
-} 
+}

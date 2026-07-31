@@ -6,9 +6,9 @@ namespace nova\plugin\mcp;
 
 /**
  * MCP工具抽象
- * 
+ *
  * 简洁的工具定义和执行
- * 
+ *
  * @author Ankio
  * @version 1.0
  */
@@ -18,7 +18,8 @@ abstract class McpTool
         protected string $name,
         protected string $description,
         protected array $inputSchema = []
-    ) {}
+    ) {
+    }
 
     /**
      * 获取工具信息
@@ -84,7 +85,7 @@ abstract class McpTool
             $actualType = gettype($value);
             $validTypes = [
                 'string' => 'string',
-                'integer' => 'integer', 
+                'integer' => 'integer',
                 'number' => ['integer', 'double'],
                 'boolean' => 'boolean',
                 'array' => 'array',
@@ -109,4 +110,4 @@ abstract class McpTool
             }
         }
     }
-} 
+}

@@ -6,9 +6,9 @@ namespace nova\plugin\mcp;
 
 /**
  * MCP提示抽象
- * 
+ *
  * 简洁的提示定义和获取
- * 
+ *
  * @author Ankio
  * @version 1.0
  */
@@ -18,7 +18,8 @@ abstract class McpPrompt
         protected string $name,
         protected string $description,
         protected array $arguments = []
-    ) {}
+    ) {
+    }
 
     /**
      * 获取提示信息
@@ -56,4 +57,4 @@ abstract class McpPrompt
             }
         }
     }
-} 
+}

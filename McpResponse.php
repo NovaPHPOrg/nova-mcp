@@ -4,14 +4,13 @@ declare(strict_types=1);
 
 namespace nova\plugin\mcp;
 
-use nova\framework\core\Logger;
 use nova\framework\http\Response;
 
 /**
  * MCP响应处理类
- * 
+ *
  * 简洁的JSON-RPC 2.0响应构造
- * 
+ *
  * @author Ankio
  * @version 1.0
  */
@@ -27,7 +26,7 @@ class McpResponse
             'id' => $id,
             'result' => $result
         ];
-        
+
         return Response::asJson($data);
     }
 
@@ -40,7 +39,7 @@ class McpResponse
         if ($data !== null) {
             $error['data'] = $data;
         }
-        
+
         return Response::asJson([
             'jsonrpc' => '2.0',
             'id' => $id,
