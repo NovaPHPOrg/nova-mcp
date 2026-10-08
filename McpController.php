@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace nova\plugin\mcp;
 
+use nova\framework\cache\Cache;
 use nova\framework\http\Response;
 use nova\framework\route\Controller;
 
@@ -17,6 +18,8 @@ use nova\framework\route\Controller;
  */
 abstract class McpController extends Controller
 {
+    private const int SESSION_TTL = 7 * 86400;
+
     /** @var McpRequest MCP请求实例 */
     protected McpRequest $mcpRequest;
 
@@ -86,7 +89,7 @@ abstract class McpController extends Controller
                 default => throw new \BadMethodCallException("Method not found: $method")
             };
 
-            return McpResponse::success($id, $result);
+            return $this->reply($method, ['jsonrpc' => '2.0', 'id' => $id, 'result' => $result]);
 
         } catch (\BadMethodCallException $e) {
             return McpResponse::methodNotFound($id);
@@ -97,6 +100,44 @@ abstract class McpController extends Controller
         } catch (\Throwable $e) {
             return McpResponse::internalError($id, $e->getMessage());
         }
+    }
+
+    /**
+     * tools/list_changed：按会话记住客户端最后一次看到的工具面指纹，
+     * 指纹变了就在本次响应前插一条通知（POST 响应走 SSE，不需要长连接）。
+     * 不带 Mcp-Session-Id 或不接受 SSE 的客户端照旧拿纯 JSON。
+     */
+    private function reply(string $method, array $message): Response
+    {
+        $isInit = $method === 'initialize';
+        $sid = $isInit ? bin2hex(random_bytes(16)) : $this->mcpRequest->getSessionId();
+        if ($sid === '') {
+            return Response::asJson($message);
+        }
+
+        $cache = new Cache();
+        $key = 'mcp_tools_seen:' . $sid;
+        $hash = $this->mcpServer->toolsHash();
+        $seen = $cache->get($key);
+        if ($isInit || $method === 'tools/list' || $seen === null) {
+            $cache->set($key, $hash, self::SESSION_TTL);
+            $seen = $hash;
+        }
+
+        $header = $isInit ? ['Mcp-Session-Id' => $sid] : [];
+        if ($seen === $hash || !$this->mcpRequest->acceptsSse()) {
+            return Response::asJson($message, 200, $header);
+        }
+
+        $notice = ['jsonrpc' => '2.0', 'method' => 'notifications/tools/list_changed'];
+        $body = '';
+        foreach ([$notice, $message] as $m) {
+            $body .= "event: message\ndata: " . json_encode($m, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) . "\n\n";
+        }
+        return Response::asText($body, [
+            'Content-Type' => 'text/event-stream',
+            'Cache-Control' => 'no-cache',
+        ]);
     }
 
     /**

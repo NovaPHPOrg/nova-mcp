@@ -69,6 +69,28 @@ class McpRequest
         return $data['id'] ?? null;
     }
 
+    public function getSessionId(): string
+    {
+        return $this->header('Mcp-Session-Id');
+    }
+
+    /** 客户端是否接受 POST 响应以 SSE 返回（Streamable HTTP） */
+    public function acceptsSse(): bool
+    {
+        return str_contains($this->header('Accept'), 'text/event-stream');
+    }
+
+    /** getallheaders 保留客户端原始大小写，只能逐个比 */
+    private function header(string $name): string
+    {
+        foreach ($this->request->getHeaders() as $k => $v) {
+            if (strcasecmp((string)$k, $name) === 0 && is_string($v)) {
+                return $v;
+            }
+        }
+        return '';
+    }
+
     /**
      * 是否为通知（无ID）
      */

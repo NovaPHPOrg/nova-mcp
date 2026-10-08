@@ -86,7 +86,7 @@ class McpServer
         $capabilities = [];
 
         if (!empty($this->tools)) {
-            $capabilities['tools'] = (object)[];
+            $capabilities['tools'] = ['listChanged' => true];
         }
 
         if (!empty($this->resources)) {
@@ -124,6 +124,12 @@ class McpServer
             'tools' => $tools
             // 省略 nextCursor 字段，因为我们不支持分页
         ];
+    }
+
+    /** 工具面指纹：名称、描述、schema 任一变化都会变 */
+    public function toolsHash(): string
+    {
+        return md5(json_encode($this->getToolsList()));
     }
 
     /**
