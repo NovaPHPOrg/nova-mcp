@@ -6,7 +6,6 @@ namespace nova\plugin\mcp;
 
 use nova\framework\http\Request;
 use nova\framework\json\Json;
-use nova\framework\json\JsonDecodeException;
 
 /**
  * MCP 请求解析：组合当前 HTTP Request，不另起一套 Request。
@@ -22,11 +21,9 @@ class McpRequest
     public function getJsonRpcData(): ?array
     {
         if ($this->jsonRpcData === null) {
-            try {
-                $this->jsonRpcData = Json::decode($this->request->raw(), true);
-            } catch (JsonDecodeException $e) {
-                $this->jsonRpcData = null;
-            }
+            // 空/非法请求体属于客户端错误，直接静默解析，由上层返回 invalidRequest
+            $decoded = json_decode(Json::removeUtf8Bom(trim($this->request->raw())), true);
+            $this->jsonRpcData = is_array($decoded) ? $decoded : null;
         }
         return $this->jsonRpcData;
     }
